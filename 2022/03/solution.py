@@ -1,5 +1,5 @@
 from string import ascii_letters
-from typing import List, Set
+from typing import List, Set, Iterable
 
 
 class Rucksack:
@@ -17,11 +17,12 @@ class Rucksack:
     def right_compartment_items(self) -> List[str]:
         return self.items[self.divider:]
 
-    @property
-    def duplicate_items(self) -> Set[str]:
-        return set(self.left_compartment_items).intersection(set(self.right_compartment_items))
+    @staticmethod
+    def check_duplicate_items(items_list: List[str]) -> Set[str]:
+        items_set = [set(items) for items in items_list]
+        return items_set[0].intersection(*items_set[1:])
 
-    def get_priority(self, items: str) -> int:
+    def get_priority(self, items: Iterable[str]) -> int:
         total_priority_index = 0
         for item in items:
             total_priority_index += ascii_letters.index(item) + 1
@@ -45,10 +46,35 @@ class Solution:
             rucksack_list.append(rucksack)
         return sum(
             map(
-                lambda x: x.get_priority(x.duplicate_items), rucksack_list
+                lambda x: x.get_priority(
+                    Rucksack.check_duplicate_items(
+                        [
+                            x.left_compartment_items,
+                            x.right_compartment_items,
+                        ]
+                    )
+                ), rucksack_list
             )
         )
+
+    @staticmethod
+    def solve2(items_list: List[str]) -> int:
+        rucksack_list = []
+        total_badge_points = 0
+        counter = 1
+        for items in items_list:
+            rucksack = Rucksack(items)
+            rucksack_list.append(rucksack)
+            if counter % 3 == 0:
+                badges = Rucksack.check_duplicate_items(
+                    list(map(lambda x: x.items, rucksack_list))
+                )
+                total_badge_points += rucksack.get_priority(badges)
+                rucksack_list = []
+            counter += 1
+        return total_badge_points
 
 
 if __name__ == "__main__":
     print(Solution.solve1(Solution.parse("input.txt")))
+    print(Solution.solve2(Solution.parse("input.txt")))
